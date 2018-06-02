@@ -8,5 +8,5 @@ Possibility to extend log object by custom properties by injection
 
 ## Installation
 ```sh
-npm install simple-logger
+npm install lightweight-logger
 ```
