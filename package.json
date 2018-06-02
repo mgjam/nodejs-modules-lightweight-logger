@@ -1,0 +1,30 @@
+{
+  "name": "simple-logger",
+  "version": "1.0.0",
+  "description": "Simple logger for nodejs application",
+  "main": "build/index",
+  "typings": "build/index",
+  "scripts": {
+    "prepublishOnly": "npm run build",
+    "build": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Milan Gatyas <12131213@seznam.cz>",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mgjam/nodejs-modules-simple-logger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mgjam/nodejs-modules-simple-logger/issues"
+  },
+  "homepage": "https://github.com/mgjam/nodejs-modules-simple-logger#readme",
+  "devDependencies": {
+    "typescript": "^2.9.1"
+  },
+  "files": [
+    "build/index.js",
+    "build/index.d.ts"
+  ]
+}
