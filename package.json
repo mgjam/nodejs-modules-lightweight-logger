@@ -1,7 +1,7 @@
 {
-  "name": "simple-logger",
+  "name": "lightweight-logger",
   "version": "1.0.0",
-  "description": "Simple logger for nodejs application",
+  "description": "Lightweight logger for nodejs application",
   "main": "build/index",
   "typings": "build/index",
   "scripts": {
@@ -14,12 +14,12 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mgjam/nodejs-modules-simple-logger.git"
+    "url": "git+https://github.com/mgjam/nodejs-modules-lightweight-logger.git"
   },
   "bugs": {
-    "url": "https://github.com/mgjam/nodejs-modules-simple-logger/issues"
+    "url": "https://github.com/mgjam/nodejs-modules-lightweight-logger/issues"
   },
-  "homepage": "https://github.com/mgjam/nodejs-modules-simple-logger#readme",
+  "homepage": "https://github.com/mgjam/nodejs-modules-lightweight-logger#readme",
   "devDependencies": {
     "typescript": "^2.9.1"
   },
