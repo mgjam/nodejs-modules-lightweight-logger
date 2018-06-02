@@ -1,4 +1,4 @@
-# simple-logger
+# lightweight-logger
 Lightweight logger for nodejs application
 
 ## Features
