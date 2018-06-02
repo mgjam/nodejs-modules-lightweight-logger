@@ -60,12 +60,10 @@ class ConsoleLogger implements Logger {
 
 let logExtensionFunc: LogExtensionFunc = (log, data) => log;
 
-const deafultExport: LogManager = ({
+export default {
     init: (loggerOptions: LoggerOptions) => {
         if (loggerOptions && loggerOptions.logExtensionFunc)
             logExtensionFunc = loggerOptions.logExtensionFunc;
     },
     createLogger: (data?: any): Logger => new ConsoleLogger(logExtensionFunc, data)
-});
-
-export default deafultExport;
+} as LogManager;
