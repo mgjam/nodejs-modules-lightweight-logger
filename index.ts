@@ -10,10 +10,12 @@ export interface LogExtensionFunc {
 }
 
 export class LoggerOptions {
-    readonly logExtensionFunc? : LogExtensionFunc;
+    readonly useConsoleLogger: boolean;
+    readonly logExtensionFunc : LogExtensionFunc;
 
-    constructor(logExtensionFunc?: LogExtensionFunc) {
-        this.logExtensionFunc = logExtensionFunc;
+    constructor(useConsoleLogger?: boolean, logExtensionFunc?: LogExtensionFunc) {
+        this.useConsoleLogger = useConsoleLogger || false;
+        this.logExtensionFunc = logExtensionFunc ||  ((log, data) => log);
     }
 }
 
@@ -22,11 +24,31 @@ export interface LogManager {
     createLogger(data?: any): Logger;
 }
 
+class NullLogger implements Logger {
+    log(log: string | object): void {
+        
+    }
+
+    logAsync(log: string | object): Promise<void> {
+        return Promise.resolve();
+    }
+
+    error(log: string | object): void {
+    
+    }
+
+    errorAsync(log: string | object): Promise<void> {
+        return Promise.resolve();
+    }
+}
+
 class ConsoleLogger implements Logger {
+    private readonly logger: Logger;
     private readonly logExtensionFunc: LogExtensionFunc;
     private readonly data?: any;
 
-    constructor(logExtensionFunc: LogExtensionFunc, data?: any) {
+    constructor(logger: Logger, logExtensionFunc: LogExtensionFunc, data?: any) {
+        this.logger = logger;
         this.logExtensionFunc = logExtensionFunc;
         this.data = data;
     }
@@ -40,30 +62,40 @@ class ConsoleLogger implements Logger {
     }
 
     log(log: string | object): void {
+        this.logger.log(log);
         console.log(this.serializeLog(log));
     }
 
-    logAsync(log: string | object): Promise<void> {
+    async logAsync(log: string | object): Promise<void> {
+        await this.logger.log(log);
         this.log(log);
         return Promise.resolve();
     }
 
     error(log: string | object): void {
+        this.logger.error(log);
         console.error(this.serializeLog(log));
     }
 
-    errorAsync(log: string | object): Promise<void> {
+    async errorAsync(log: string | object): Promise<void> {
+        await this.logger.error(log);
         this.error(log);
         return Promise.resolve();
     }
 }
 
-let logExtensionFunc: LogExtensionFunc = (log, data) => log;
+let loggerOptions: LoggerOptions;
 
 export default {
-    init: (loggerOptions: LoggerOptions) => {
-        if (loggerOptions && loggerOptions.logExtensionFunc)
-            logExtensionFunc = loggerOptions.logExtensionFunc;
+    init: (options: LoggerOptions) => {
+        loggerOptions = options;
     },
-    createLogger: (data?: any): Logger => new ConsoleLogger(logExtensionFunc, data)
+    createLogger: (data?: any): Logger => {
+        const nullLogger = new NullLogger();
+        const consoleLogger = loggerOptions.useConsoleLogger
+            ? new ConsoleLogger(nullLogger, loggerOptions.logExtensionFunc, data)
+            : nullLogger;
+
+        return consoleLogger;
+    }
 } as LogManager;

@@ -1,6 +1,6 @@
 {
   "name": "lightweight-logger",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Lightweight logger for nodejs application",
   "main": "build/index",
   "typings": "build/index",
