@@ -12,6 +12,7 @@ npm install lightweight-logger
 ```
 
 ## Usage [JS]
+```js
 const lib = require("lightweigh-logger");
 
 lib.default.configure(new lib.LoggerOptions(
@@ -27,3 +28,4 @@ const logger = lib.default.createLogger({correlationId: "xyz"});
 
 for (let i = 0; i < 10000; i++)
     setTimeout(() => logger.log(i.toString(), lib.LogSeverity.Info), i);
+```
