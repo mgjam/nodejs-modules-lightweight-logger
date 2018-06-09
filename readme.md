@@ -34,7 +34,7 @@ for (let i = 0; i < 2; i++)
 logger.log({message: "log message", data: {foo: "bar"}}, lib.LogSeverity.Error);
 
 /*
- * Output: C:/Log/2018_6_9_12.log
+ * Output: C:/Log/2018_6_9_10.log
  * 
  * {"message":"0","dateTime":"2018-06-09T10:43:39.763Z","severity":"Info","correlationId":"xyz"}
  * {"message":"1","dateTime":"2018-06-09T10:43:39.763Z","severity":"Info","correlationId":"xyz"}
