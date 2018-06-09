@@ -1,101 +1,117 @@
+import * as path from "path";
+import * as fs from "graceful-fs";
+import { setTimeout } from "timers";
+
+export enum LogSeverity {
+    Debug,
+    Info,
+    Warn,
+    Error
+}
+
 export interface Logger {
-    log(log: string | object): void;
-    logAsync(log: string | object): Promise<void>;
-    error(log: string | object): void;
-    errorAsync(log: string | object): Promise<void>;
+    log(log: string | object, severity: LogSeverity): void;
 }
 
 export interface LogExtensionFunc {
     (log: object, data?: any): object;
 }
 
-export class LoggerOptions {
-    readonly useConsoleLogger: boolean;
-    readonly logExtensionFunc : LogExtensionFunc;
-
-    constructor(useConsoleLogger?: boolean, logExtensionFunc?: LogExtensionFunc) {
-        this.useConsoleLogger = useConsoleLogger || false;
-        this.logExtensionFunc = logExtensionFunc ||  ((log, data) => log);
-    }
-}
-
 export interface LogManager {
-    init(loggerOptions: LoggerOptions): void;
+    configure(loggerOptions: LoggerOptions): void;
     createLogger(data?: any): Logger;
 }
 
-class NullLogger implements Logger {
-    log(log: string | object): void {
-        
-    }
+export class ConsoleLoggerOptions {
+    readonly useConsoleLogger: boolean;
 
-    logAsync(log: string | object): Promise<void> {
-        return Promise.resolve();
-    }
-
-    error(log: string | object): void {
-    
-    }
-
-    errorAsync(log: string | object): Promise<void> {
-        return Promise.resolve();
+    constructor(useConsoleLogger?: boolean) {
+        this.useConsoleLogger = useConsoleLogger || false;
     }
 }
 
-class ConsoleLogger implements Logger {
-    private readonly logger: Logger;
-    private readonly logExtensionFunc: LogExtensionFunc;
+export class FileLoggerOptions {
+    readonly useFileLogger: boolean;
+    readonly logPath: string;
+
+    constructor(useFileLogger?: boolean, logPath?: string) {
+        this.useFileLogger = useFileLogger || false;
+        this.logPath = logPath || "./";
+    }
+}
+
+export class LoggerOptions {
+    readonly logExtensionFunc: LogExtensionFunc;
+    readonly consoleLoggerOptions: ConsoleLoggerOptions;
+    readonly fileLoggerOptions: FileLoggerOptions;
+
+    constructor(logExtensionFunc?: LogExtensionFunc, consoleLoggerOptions?: ConsoleLoggerOptions, fileLoggerOptions?: FileLoggerOptions) {
+        this.logExtensionFunc = logExtensionFunc || ((log, data) => log);
+        this.consoleLoggerOptions = consoleLoggerOptions || new ConsoleLoggerOptions();
+        this.fileLoggerOptions = fileLoggerOptions || new FileLoggerOptions();
+    }
+}
+
+class ConsoleLogger {
+    private readonly consoleLoggerOptions: ConsoleLoggerOptions;
+
+    constructor(consoleLoggerOptions: ConsoleLoggerOptions) {
+        this.consoleLoggerOptions = consoleLoggerOptions;
+    }
+
+    log(log: string, severity: LogSeverity) {
+        if (severity === LogSeverity.Error)
+            console.error(log);
+        else
+            console.log(log);
+    }
+}
+
+class FileLogger implements Logger {
+    private readonly consoleLogger: ConsoleLogger;
+    private readonly loggerOptions: LoggerOptions;
     private readonly data?: any;
 
-    constructor(logger: Logger, logExtensionFunc: LogExtensionFunc, data?: any) {
-        this.logger = logger;
-        this.logExtensionFunc = logExtensionFunc;
+    constructor(loggerOptions: LoggerOptions, data?: any) {
+        this.consoleLogger = new ConsoleLogger(loggerOptions.consoleLoggerOptions);
+        this.loggerOptions = loggerOptions;
         this.data = data;
     }
 
-    private serializeLog(log: string | object) {
-        const rawLog = typeof log === "string" ? {log} : log;
-        const extendedLog = this.logExtensionFunc(rawLog, this.data);
-        const serializedLog = JSON.stringify(extendedLog);
-        
-        return serializedLog;
+    serializeLog(log: string | object, severity: LogSeverity, date: Date): string {
+        const logObj = typeof log === "string" ? { log } : log;
+
+        (<any>logObj)["dateTime"] = date.toISOString();
+        (<any>logObj)["severity"] = LogSeverity[severity];
+
+        return JSON.stringify(this.loggerOptions.logExtensionFunc(logObj, this.data));
+    };
+
+    getLogFileName(date: Date): string {
+        const dateStr = date.getFullYear().toString() + "_" + (date.getMonth() + 1) + "_" + date.getDate().toString() + "_" + date.getHours().toString();
+
+        return path.join(this.loggerOptions.fileLoggerOptions.logPath, `${dateStr}.log`);
     }
 
-    log(log: string | object): void {
-        this.logger.log(log);
-        console.log(this.serializeLog(log));
+    logToFile(logFileName: string, log: string, attempt: number) {
+        fs.writeFile(logFileName, log, { flag: "a+" }, err => { });
     }
 
-    async logAsync(log: string | object): Promise<void> {
-        await this.logger.log(log);
-        this.log(log);
-        return Promise.resolve();
-    }
+    log(log: string | object, severity: LogSeverity): void {
+        const date = new Date();
+        const toLog = this.serializeLog(log, severity, date);
+        this.consoleLogger.log(toLog, severity);
 
-    error(log: string | object): void {
-        this.logger.error(log);
-        console.error(this.serializeLog(log));
-    }
-
-    async errorAsync(log: string | object): Promise<void> {
-        await this.logger.error(log);
-        this.error(log);
-        return Promise.resolve();
+        if (!this.loggerOptions.fileLoggerOptions.useFileLogger)
+            return;
+            
+        this.logToFile(this.getLogFileName(date), toLog + "\n", 1);
     }
 }
 
-let loggerOptions: LoggerOptions;
+let loggerOptions: LoggerOptions = new LoggerOptions();
 
 export default {
-    init: (options: LoggerOptions) => {
-        loggerOptions = options;
-    },
-    createLogger: (data?: any): Logger => {
-        const nullLogger = new NullLogger();
-        const consoleLogger = loggerOptions.useConsoleLogger
-            ? new ConsoleLogger(nullLogger, loggerOptions.logExtensionFunc, data)
-            : nullLogger;
-
-        return consoleLogger;
-    }
+    configure: (options: LoggerOptions) => { loggerOptions = options; },
+    createLogger: (data?: any): Logger => new FileLogger(loggerOptions, data)
 } as LogManager;
