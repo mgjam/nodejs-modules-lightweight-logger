@@ -13,7 +13,7 @@ npm install lightweight-logger
 
 ## Usage [JS]
 ```js
-const lib = require("lightweigh-logger");
+const lib = require("lightweight-logger");
 
 lib.default.configure(new lib.LoggerOptions(
     (log, data) => { 
