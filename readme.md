@@ -34,10 +34,10 @@ for (let i = 0; i < 2; i++)
 logger.log({message: "log message", data: {foo: "bar"}}, lib.LogSeverity.Error);
 
 /*
- * Output: C:/Log/2018_6_9_10.log
+ * Output: C:/Log/2018_6_9_12.log
  * 
- * {"log":"0","dateTime":"2018-06-09T10:17:10.749Z","severity":"Info","correlationId":"xyz"}
- * {"log":"1","dateTime":"2018-06-09T10:17:10.765Z","severity":"Info","correlationId":"xyz"}
- * {"message":"log message","data":{"foo":"bar"},"dateTime":"2018-06-09T10:17:10.765Z","severity":"Error","correlationId":"xyz"}
+ * {"message":"0","dateTime":"2018-06-09T10:43:39.763Z","severity":"Info","correlationId":"xyz"}
+ * {"message":"1","dateTime":"2018-06-09T10:43:39.763Z","severity":"Info","correlationId":"xyz"}
+ * {"message":"log message","data":{"foo":"bar"},"dateTime":"2018-06-09T10:43:39.763Z","severity":"Error","correlationId":"xyz"}
  */
 ```

@@ -1,6 +1,5 @@
 import * as path from "path";
 import * as fs from "graceful-fs";
-import { setTimeout } from "timers";
 
 export interface LogManager {
     configure(loggerOptions: LoggerOptions): void;
@@ -66,6 +65,7 @@ class FileLogger implements Logger {
     log(log: string | object, severity: LogSeverity): void {
         const date = new Date();
         const toLog = this.serializeLog(log, severity, date);
+
         this.consoleLogger.log(toLog, severity);
 
         if (!this.loggerOptions.fileLoggerOptions.useFileLogger)
@@ -75,7 +75,7 @@ class FileLogger implements Logger {
     }
 
     serializeLog(log: string | object, severity: LogSeverity, date: Date): string {
-        const logObj = typeof log === "string" ? { log } : log;
+        const logObj = typeof log === "object" ? (log ? log : { message: "" }) : { "message": (log === undefined || log === null ? "" : log.toString()) };
 
         (<any>logObj)["dateTime"] = date.toISOString();
         (<any>logObj)["severity"] = LogSeverity[severity];
