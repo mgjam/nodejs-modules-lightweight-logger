@@ -29,7 +29,7 @@ export interface Logger {
     d(log: string | object): void;
     i(log: string | object): void;
     w(log: string | object): void;
-    e(log: string | object, err?: Error): void;
+    e(log: string | object, err?: any): void;
 }
 
 enum LogSeverity {
@@ -53,9 +53,9 @@ class FileLogger implements Logger {
     d(log: string | object): void { this.log(log, LogSeverity.Debug); }
     i(log: string | object): void { this.log(log, LogSeverity.Info); }
     w(log: string | object): void { this.log(log, LogSeverity.Warning); }
-    e(log: string | object, err?: Error): void { this.log(log, LogSeverity.Error, err); }
+    e(log: string | object, err?: any): void { this.log(log, LogSeverity.Error, err); }
 
-    private log(log: string | object, severity: LogSeverity, err?: Error): void {
+    private log(log: string | object, severity: LogSeverity, err?: any): void {
         const date = new Date();
         const toLog = this.serializeLog(log, severity, date, err);
 
@@ -67,12 +67,12 @@ class FileLogger implements Logger {
         fs.writeFile(this.getLogFileName(date), toLog + "\r\n", { flag: "a+" }, err => { });
     }
 
-    private serializeLog(log: string | object, severity: LogSeverity, date: Date, err?: Error): string {
+    private serializeLog(log: string | object, severity: LogSeverity, date: Date, err?: any): string {
         const logObj = typeof log === "object" ? (log ? log : { message: "" }) : { "message": (log === undefined || log === null ? "" : log.toString()) };
 
         (<any>logObj)["timeStamp"] = date.toISOString();
         (<any>logObj)["severity"] = LogSeverity[severity];
-        if (err) (<any>logObj)["error"] = this.copyObj(err);
+        if (err) (<any>logObj)["error"] = typeof err == "object" ? this.copyObj(err) : err.toString();
 
         return JSON.stringify(this.loggerOptions.logExtensionFunc(logObj, this.data));
     }
