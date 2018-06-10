@@ -1,9 +1,9 @@
 {
   "name": "lightweight-logger",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "Lightweight logger for nodejs application",
-  "main": "build/index",
-  "typings": "build/index",
+  "main": "index",
+  "typings": "index",
   "scripts": {
     "prepublishOnly": "npm run build",
     "build": "tsc -p .",
@@ -26,8 +26,8 @@
     "typescript": "^2.9.1"
   },
   "files": [
-    "build/index.js",
-    "build/index.d.ts"
+    "index.js",
+    "index.d.ts"
   ],
   "dependencies": {
     "graceful-fs": "^4.1.11"
