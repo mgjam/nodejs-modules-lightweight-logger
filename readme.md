@@ -15,29 +15,36 @@ npm install lightweight-logger
 ```js
 const lib = require("lightweight-logger");
 
-lib.default.configure(new lib.LoggerOptions(
-    (log, data) => { 
-        log["correlationId"] = data.correlationId; // extend log object with given field
-        return log; 
+lib.configure({
+    // extend log object with given field
+    logExtensionFunc: (log, data) => {
+        log["correlationId"] = data.correlationId;
+        return log;
     },
-    new lib.ConsoleLoggerOptions(true), // Use console logger
-    // Use file logger, write to given path (path must exist!)
-    // New log file per hour is created automatically
-    new lib.FileLoggerOptions(true, "C:/Log") 
-));
+    consoleLoggerOptions: {
+        // Use console logger
+        useConsoleLogger: true
+    },
+    fileLoggerOptions: {
+        // Use file logger. New log file per hour is created automatically
+        useFileLogger: true,
+        // Write to given path (path must exist!)
+        logPath: "C:/Log"
+    }
+});
 
-const logger = lib.default.createLogger({correlationId: "xyz"});
+const logger = lib.createLogger({correlationId: "xyz"});
 
 for (let i = 0; i < 2; i++)
-    logger.log(i.toString(), lib.LogSeverity.Info);
+    logger.i(i.toString());
 
-logger.log({message: "log message", data: {foo: "bar"}}, lib.LogSeverity.Error);
+logger.e({message: "log message", data: {foo: "bar"}}, new Error("error message"));
 
 /*
- * Output: C:/Log/2018_6_9_10.log
+ * Output: C:/Log/2018_6_10_6.log
  * 
- * {"message":"0","dateTime":"2018-06-09T10:43:39.763Z","severity":"Info","correlationId":"xyz"}
- * {"message":"1","dateTime":"2018-06-09T10:43:39.763Z","severity":"Info","correlationId":"xyz"}
- * {"message":"log message","data":{"foo":"bar"},"dateTime":"2018-06-09T10:43:39.763Z","severity":"Error","correlationId":"xyz"}
- */
+ * {"message":"0","timeStamp":"2018-06-10T06:30:45.548Z","severity":"Info","correlationId":"xyz"}
+ * {"message":"1","timeStamp":"2018-06-10T06:30:45.548Z","severity":"Info","correlationId":"xyz"}
+ * {"message":"log message","data":{"foo":"bar"},"timeStamp":"2018-06-10T06:30:45.548Z","severity":"Error","error":{"stack":"<intentionally removed>","message":"error message"},"correlationId":"xyz"}
+ * /
 ```

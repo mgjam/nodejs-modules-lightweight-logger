@@ -6,48 +6,36 @@ export interface LogManager {
     createLogger(data?: any): Logger;
 }
 
-export class LoggerOptions {
+export interface LoggerOptions {
     readonly logExtensionFunc: LogExtensionFunc;
     readonly consoleLoggerOptions: ConsoleLoggerOptions;
     readonly fileLoggerOptions: FileLoggerOptions;
-
-    constructor(logExtensionFunc?: LogExtensionFunc, consoleLoggerOptions?: ConsoleLoggerOptions, fileLoggerOptions?: FileLoggerOptions) {
-        this.logExtensionFunc = logExtensionFunc || ((log, data) => log);
-        this.consoleLoggerOptions = consoleLoggerOptions || new ConsoleLoggerOptions();
-        this.fileLoggerOptions = fileLoggerOptions || new FileLoggerOptions();
-    }
 }
 
 export interface LogExtensionFunc {
     (log: object, data?: any): object;
 }
 
-export class ConsoleLoggerOptions {
+export interface ConsoleLoggerOptions {
     readonly useConsoleLogger: boolean;
-
-    constructor(useConsoleLogger?: boolean) {
-        this.useConsoleLogger = useConsoleLogger || false;
-    }
 }
 
-export class FileLoggerOptions {
+export interface FileLoggerOptions {
     readonly useFileLogger: boolean;
     readonly logPath: string;
-
-    constructor(useFileLogger?: boolean, logPath?: string) {
-        this.useFileLogger = useFileLogger || false;
-        this.logPath = logPath || "./";
-    }
 }
 
 export interface Logger {
-    log(log: string | object, severity: LogSeverity): void;
+    d(log: string | object): void;
+    i(log: string | object): void;
+    w(log: string | object): void;
+    e(log: string | object, err?: Error): void;
 }
 
-export enum LogSeverity {
+enum LogSeverity {
     Debug,
     Info,
-    Warn,
+    Warning,
     Error
 }
 
@@ -62,9 +50,14 @@ class FileLogger implements Logger {
         this.data = data;
     }
 
-    log(log: string | object, severity: LogSeverity): void {
+    d(log: string | object): void { this.log(log, LogSeverity.Debug); }
+    i(log: string | object): void { this.log(log, LogSeverity.Info); }
+    w(log: string | object): void { this.log(log, LogSeverity.Warning); }
+    e(log: string | object, err?: Error): void { this.log(log, LogSeverity.Error, err); }
+
+    private log(log: string | object, severity: LogSeverity, err?: Error): void {
         const date = new Date();
-        const toLog = this.serializeLog(log, severity, date);
+        const toLog = this.serializeLog(log, severity, date, err);
 
         this.consoleLogger.log(toLog, severity);
 
@@ -74,19 +67,30 @@ class FileLogger implements Logger {
         fs.writeFile(this.getLogFileName(date), toLog + "\r\n", { flag: "a+" }, err => { });
     }
 
-    serializeLog(log: string | object, severity: LogSeverity, date: Date): string {
+    private serializeLog(log: string | object, severity: LogSeverity, date: Date, err?: Error): string {
         const logObj = typeof log === "object" ? (log ? log : { message: "" }) : { "message": (log === undefined || log === null ? "" : log.toString()) };
 
-        (<any>logObj)["dateTime"] = date.toISOString();
+        (<any>logObj)["timeStamp"] = date.toISOString();
         (<any>logObj)["severity"] = LogSeverity[severity];
+        if (err) (<any>logObj)["error"] = this.copyObj(err);
 
         return JSON.stringify(this.loggerOptions.logExtensionFunc(logObj, this.data));
     }
 
-    getLogFileName(date: Date): string {
-        const dateStr = date.getFullYear().toString() + "_" + (date.getMonth() + 1) + "_" + date.getDate().toString() + "_" + date.getHours().toString();
+    private getLogFileName(date: Date): string {
+        const dateStr = date.getUTCFullYear().toString() + "_" + (date.getUTCMonth() + 1) + "_" + date.getUTCDate().toString() + "_" + date.getUTCHours().toString();
 
         return path.join(this.loggerOptions.fileLoggerOptions.logPath, `${dateStr}.log`);
+    }
+
+    private copyObj(obj: object): object {
+        var alt = {};
+
+        Object.getOwnPropertyNames(obj).forEach(function (key) {
+            (<any>alt)[key] = (<any>obj)[key];
+        }, this);
+
+        return alt;
     }
 }
 
@@ -108,9 +112,22 @@ class ConsoleLogger {
     }
 }
 
-let loggerOptions: LoggerOptions = new LoggerOptions();
+let loggerOptions: LoggerOptions = {
+    logExtensionFunc: (log, data) => log,
+    consoleLoggerOptions: {
+        useConsoleLogger: false
+    },
+    fileLoggerOptions: {
+        useFileLogger: false,
+        logPath: "./"
+    }
+};
 
-export default {
-    configure: (options: LoggerOptions) => { loggerOptions = options; },
-    createLogger: (data?: any): Logger => new FileLogger(loggerOptions, data)
-} as LogManager;
+const configure = (options: LoggerOptions): void => { loggerOptions = options; }
+
+const createLogger = (data?: any): Logger => new FileLogger(loggerOptions, data);
+
+export {
+    configure,
+    createLogger
+};
